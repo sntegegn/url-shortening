@@ -1,23 +1,18 @@
 package main
 
 import (
-	"bytes"
-	"html/template"
+	"context"
+	"database/sql"
 	"math/rand"
 	"net/http"
 	"time"
 
-	"github.com/sntegegn/url-shortening/ui"
+	_ "github.com/lib/pq"
 )
 
-func (app *application) sendEmail() {
-	err := app.mailer.Send("john@example.com", "email.tmpl.html", nil)
-	if err != nil {
-		app.logger.Error(err.Error())
-	}
-}
-
-func (app *application) generateShortKey(url string) string {
+func (app *application) generateShortKey(ctx context.Context, url string) string {
+	_, span := app.tracer.Start(ctx, "generteShortKey")
+	defer span.End()
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
 
@@ -29,45 +24,30 @@ func (app *application) generateShortKey(url string) string {
 	return string(shortKey)
 }
 
-func (app *application) decodePostForm(r *http.Request, dst any) error {
-	err := r.ParseForm()
-	if err != nil {
-		return err
-	}
-
-	err = app.formDecoder.Decode(dst, r.PostForm)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (app *application) serverError(w http.ResponseWriter, r *http.Request, err error) {
 	app.logger.Error(err.Error())
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
-func (app *application) badRequestError(w http.ResponseWriter, r *http.Request, msg string) {
-	app.logger.Error(msg)
-	http.Error(w, msg, http.StatusInternalServerError)
+func (app *application) badRequestError(w http.ResponseWriter, r *http.Request, err error) {
+	app.logger.Error(err.Error())
+	http.Error(w, err.Error(), http.StatusBadRequest)
 }
 
-func (app *application) render(w http.ResponseWriter, r *http.Request, statusCode int, page, templateName string, data any) {
-	ts, err := template.New("form").ParseFS(ui.Files, "html/"+page)
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.dsn)
 	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	buf := new(bytes.Buffer)
-
-	err = ts.ExecuteTemplate(buf, templateName, data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+		return nil, err
 	}
 
-	w.WriteHeader(statusCode)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	buf.WriteTo(w)
+	err = db.PingContext(ctx)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
 
+	return db, nil
 }
