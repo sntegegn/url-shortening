@@ -1,4 +1,4 @@
-Different Commands
+Commands
 - Run the application using 
 `docker compose up`
 - Run the tests using
