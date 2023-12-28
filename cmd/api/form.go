@@ -22,7 +22,6 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 }
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, statusCode int, page, templateName string, data any) {
-	app.logger.Debug("In render")
 	ts, err := template.New("form").ParseFS(ui.Files, "html/"+page)
 	if err != nil {
 		app.serverError(w, r, err)

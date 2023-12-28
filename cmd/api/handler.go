@@ -44,13 +44,8 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortKey := app.generateShortKey(ctx, form.LongURL)
+	shortKey := app.generateShortKey(ctx)
 
-	//app.urls[shortKey] = form.LongURL
-	/* 	u := models.URL{
-		ShortKey: shortKey,
-		LongURL:  form.LongURL,
-	} */
 	err = app.URLModel.Insert(shortKey, form.LongURL)
 	if err != nil {
 		app.serverError(w, r, err)

@@ -16,7 +16,7 @@ import (
 
 func newTestApplication(t *testing.T) *application {
 	formDecoder := form.NewDecoder()
-	tr := otel.Tracer("teset")
+	tr := otel.Tracer("test")
 	app := application{
 		config:      config{},
 		logger:      slog.New(slog.NewJSONHandler(io.Discard, nil)),

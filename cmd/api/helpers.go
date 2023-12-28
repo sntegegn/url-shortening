@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (app *application) generateShortKey(ctx context.Context, url string) string {
+func (app *application) generateShortKey(ctx context.Context) string {
 	_, span := app.tracer.Start(ctx, "generteShortKey")
 	defer span.End()
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
