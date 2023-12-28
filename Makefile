@@ -41,3 +41,10 @@ migrate/force:
 .PHONY: build 
 build:
 	go build -o shortner ./cmd/api
+
+# ========================= #
+# TEST
+# ========================= #
+.PHONY: test
+test:
+	go test -v ./cmd/api
